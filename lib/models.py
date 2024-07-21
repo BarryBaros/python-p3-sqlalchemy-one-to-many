@@ -1,10 +1,41 @@
-from sqlalchemy import ForeignKey, Column, Integer, String, MetaData
-from sqlalchemy.orm import relationship, backref
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import create_engine, ForeignKey, Column, Integer, String
+from sqlalchemy.orm import relationship, backref, declarative_base
 
-convention = {
-    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
-}
-metadata = MetaData(naming_convention=convention)
+# Create the engine
+engine = create_engine('sqlite:///one_to_many.db')
 
-Base = declarative_base(metadata=metadata)
+# Create a base class
+Base = declarative_base()
+
+# Define the Game model
+class Game(Base):
+    __tablename__ = 'games'
+
+    id = Column(Integer, primary_key=True)
+    title = Column(String, nullable=False)
+    genre = Column(String, nullable=False)
+    platform = Column(String, nullable=False)
+    price = Column(Integer, nullable=False)
+
+    # Define the one-to-many relationship with Review
+    reviews = relationship('Review', backref=backref('game', uselist=False))
+
+    def __repr__(self):
+        return (f'Game(id={self.id}, title={self.title}, ' +
+                f'platform={self.platform})')
+
+# Define the Review model
+class Review(Base):
+    __tablename__ = 'reviews'
+
+    id = Column(Integer, primary_key=True)
+    score = Column(Integer, nullable=False)
+    comment = Column(String, nullable=False)
+    game_id = Column(Integer, ForeignKey('games.id'), nullable=False)
+
+    def __repr__(self):
+        return (f'Review(id={self.id}, score={self.score}, ' +
+                f'game_id={self.game_id})')
+
+# Create all tables
+Base.metadata.create_all(engine)
